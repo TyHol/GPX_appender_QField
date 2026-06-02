@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Map/route track line -->
+  <polyline points="3,17 7,11 11,14 15,7 21,10" stroke-width="2"/>
+  <!-- Waypoint dots -->
+  <circle cx="3"  cy="17" r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="7"  cy="11" r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="11" cy="14" r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="15" cy="7"  r="1.5" fill="currentColor" stroke="none"/>
+  <circle cx="21" cy="10" r="1.5" fill="currentColor" stroke="none"/>
+  <!-- Down-arrow to suggest import -->
+  <line x1="12" y1="19" x2="12" y2="23" stroke-width="2"/>
+  <polyline points="9,21 12,24 15,21" stroke-width="2"/>
+</svg>
