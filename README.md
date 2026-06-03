@@ -31,7 +31,7 @@ A [QField](https://qfield.org) plugin for importing GPX files into existing proj
 ---
 
 ## Installation
-<img width="543" height="532" alt="image" src="https://github.com/user-attachments/assets/4530c3b8-9579-4bd9-b8a3-f0c24461dc9c" />
+<img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/4530c3b8-9579-4bd9-b8a3-f0c24461dc9c" />
 
 
 ## Usage
