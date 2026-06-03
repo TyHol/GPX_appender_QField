@@ -1,7 +1,7 @@
 [general]
 name=GPX Appender QField
 description=Import GPX files into project layers and export layers back to GPX. Supports waypoints, tracks and routes; field mapping with auto-match; elevation (Z) round-trip; feature checklist for selective export.
-author=Tony Holmes
+author=TYHOL
 icon=icon.svg
 version=0.1.0
 homepage=https://github.com/TyHol/GPX_appender_QField
