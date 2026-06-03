@@ -31,18 +31,8 @@ A [QField](https://qfield.org) plugin for importing GPX files into existing proj
 ---
 
 ## Installation
+<img width="543" height="532" alt="image" src="https://github.com/user-attachments/assets/4530c3b8-9579-4bd9-b8a3-f0c24461dc9c" />
 
-Copy the `GPX_appender_QField` folder into your QField plugins directory and restart QField.
-
-| Platform | Plugin directory |
-|---|---|
-| Android | `/storage/…/QField/plugins/` |
-| Windows | `%APPDATA%\QField\plugins\` |
-| Linux / macOS | `~/.local/share/QField/plugins/` |
-
-Then enable the plugin in **QField → Settings → Plugins**.
-
----
 
 ## Usage
 
