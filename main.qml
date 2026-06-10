@@ -29,12 +29,41 @@ Item {
     // Field names of the currently selected import layer (for mapping UI)
     property var layerFieldNames: []
 
+    // ── Device file picker (Browse device storage…) ──────────────────────────
+    // Holds the in-flight ResourceSource while platformUtilities.getFile() is
+    // waiting for the user to pick a file via the OS file picker / SAF.
+    property ResourceSource _gpxResourceSource: null
+
+    // ── Last successful export (for "Export to folder…" / "Send…") ───────────
+    property string _lastExportedPath: ""
 
     // GPX tags we know how to detect and map
 
     Component.onCompleted: {
         iface.addItemToPluginsToolbar(gpxButton)
-        iface.addItemToPluginsToolbar(exportButton)
+    }
+
+    // React to a file picked via platformUtilities.getFile() (Browse device
+    // storage). The picked file is copied by QField into
+    // <project>/tmp/<relativePath>; we then load it like any other GPX file.
+    Connections {
+        target: _gpxResourceSource
+        function onResourceReceived(path) {
+            if (path) {
+                readAndLoadGpxFile(qgisProject.homePath + "/tmp/" + path)
+            } else {
+                statusLabel.text = qsTr("No file selected.")
+            }
+        }
+    }
+
+    // Open the OS-native file picker (SAF on Android, native dialog on
+    // desktop) so the user can pick a GPX file from anywhere on the device,
+    // not just the project folder. The picked file is copied into
+    // <project>/tmp/ and then read normally.
+    function browseDeviceGpxFile() {
+        platformUtilities.requestStoragePermission()
+        _gpxResourceSource = platformUtilities.getFile(qgisProject.homePath + "/tmp/", "{filename}", "*/*", plugin)
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -196,6 +225,7 @@ Item {
                     onClicked: {
                         _isExportMode = true
                         exportPickerPath = ""
+                        _lastExportedPath = ""
                         refreshLayersForExport()
                         exportStatusLabel.text = ""
                         exportProgressBar.visible = false
@@ -278,7 +308,7 @@ Item {
                         Layout.fillWidth: true
                         font: Theme.tipFont; color: Theme.secondaryTextColor
                         wrapMode: Text.Wrap; opacity: 0.7
-                        text: qsTr("Note: files outside the project folder may not be accessible on all devices.")
+                        text: qsTr("Note: 'Browse…' may not reach files outside the project folder on some devices — use 'Browse device storage…' instead.")
                     }
                     RowLayout {
                         Layout.fillWidth: true
@@ -296,6 +326,13 @@ Item {
                             color: Theme.secondaryTextColor
                             elide: Text.ElideMiddle
                         }
+                    }
+                    Button {
+                        Layout.fillWidth: true
+                        text: qsTr("Browse device storage…")
+                        font: Theme.defaultFont
+                        visible: platformUtilities.capabilities & PlatformUtilities.FilePicker
+                        onClicked: browseDeviceGpxFile()
                     }
                     Button {
                         Layout.fillWidth: true
@@ -639,6 +676,34 @@ Item {
                     wrapMode: Text.Wrap
                     font: Theme.tipFont; color: Theme.secondaryTextColor
                     text: ""
+                }
+
+                // ── Hand the exported file to the OS (Android) ────────────────
+                // exportDatasetTo opens the native "save to folder" picker
+                // (SAF), letting the user copy the file anywhere on the
+                // device — including outside the project folder.
+                // sendDatasetTo opens the native share sheet (email, Drive,
+                // Bluetooth, etc.). Neither is available on desktop, where
+                // the file picker above already covers this.
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    visible: _lastExportedPath !== ""
+                          && (platformUtilities.capabilities & (PlatformUtilities.CustomExport | PlatformUtilities.CustomSend))
+                    Button {
+                        Layout.fillWidth: true
+                        text: qsTr("Export to folder…")
+                        font: Theme.defaultFont
+                        visible: platformUtilities.capabilities & PlatformUtilities.CustomExport
+                        onClicked: platformUtilities.exportDatasetTo(_lastExportedPath)
+                    }
+                    Button {
+                        Layout.fillWidth: true
+                        text: qsTr("Send…")
+                        font: Theme.defaultFont
+                        visible: platformUtilities.capabilities & PlatformUtilities.CustomSend
+                        onClicked: platformUtilities.sendDatasetTo(_lastExportedPath)
+                    }
                 }
             }   // end export ColumnLayout
 
@@ -1127,6 +1192,7 @@ Item {
         exportProgressBar.visible = true
         exportButton2.enabled = false
         exportStatusLabel.text = qsTr("Exporting…")
+        _lastExportedPath = ""
 
         var gt    = layer.geometryType ? layer.geometryType() : -1
         var wgs84 = CoordinateReferenceSystemUtils.wgs84Crs()
@@ -1248,6 +1314,7 @@ Item {
         if (wrote) {
             exportStatusLabel.text = qsTr("Exported %1 feature(s) to:\n%2").arg(exported).arg(destPath)
             mainWindow.displayToast(qsTr("GPX exported: %1 feature(s)").arg(exported))
+            _lastExportedPath = destPath
         } else if (fallbackPath && fallbackPath !== destPath) {
             var wroteFallback = false
             try { wroteFallback = FileUtils.writeFileContent(fallbackPath, xml) } catch(e) {}
@@ -1255,6 +1322,7 @@ Item {
                 exportStatusLabel.text = qsTr("Exported %1 feature(s).\nCould not write to chosen location — saved to:\n%2")
                     .arg(exported).arg(fallbackPath)
                 mainWindow.displayToast(qsTr("GPX saved to project folder"))
+                _lastExportedPath = fallbackPath
             } else {
                 exportStatusLabel.text = qsTr("Could not write GPX file.\nCheck the folder exists and is writable.")
             }
