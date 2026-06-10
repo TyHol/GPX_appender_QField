@@ -244,6 +244,20 @@ Item {
                 Layout.fillWidth: true
                 spacing: 8
 
+            // ── Scrollable content (everything except progress/status) ────────
+            ScrollView {
+                id: importScrollView
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(importContent.implicitHeight, mainWindow.height * 0.45)
+                clip: true
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                ScrollBar.vertical.policy:   ScrollBar.AsNeeded
+
+            ColumnLayout {
+                id: importContent
+                width: importScrollView.width - importScrollView.ScrollBar.vertical.width - 4
+                spacing: 8
+
             // ── Destination layer ─────────────────────────────────────────────
             Label { text: qsTr("Destination layer"); font: Theme.defaultFont; color: Theme.mainTextColor }
             ComboBox {
@@ -424,51 +438,41 @@ Item {
                               : qsTr("Load a file first to see field mapping.")
                         font: Theme.tipFont; color: Theme.secondaryTextColor; wrapMode: Text.Wrap
                     }
-                    ScrollView {
-                        id: mappingScrollView
+                    // No inner ScrollView here — the outer importScrollView
+                    // handles scrolling for the whole tab, so the field
+                    // mapping rows just lay out at their natural height.
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: Math.min(fieldMappingModel.count * 54, 320)
                         visible: fieldMappingModel.count > 0
-                        clip: true
-                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                        // AlwaysOn forces Qt to reserve the scrollbar track width so it
-                        // never overlays the content; hide it visually when not needed
-                        // by making it transparent when content fits.
-                        ScrollBar.vertical.policy:   ScrollBar.AlwaysOn
-                        ColumnLayout {
-                            // Use width minus a fixed gutter so ComboBox arrows are clear
-                            // of the scrollbar track on all platforms.
-                            width: mappingScrollView.width - mappingScrollView.ScrollBar.vertical.width - 4
-                            spacing: 0
-                            Repeater {
-                                model: fieldMappingModel
-                                delegate: RowLayout {
+                        spacing: 0
+                        Repeater {
+                            model: fieldMappingModel
+                            delegate: RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                property int rowIdx: index
+                                property var sources: ["(ignore)","name","time","desc","cmt","ele",
+                                                       "sat","hdop","vdop","pdop","sym","type",
+                                                       "fix","speed","course","magvar",
+                                                       "filename","foldername"]
+                                Label {
+                                    text: fieldName
+                                    font: Theme.defaultFont
+                                    color: Theme.mainTextColor
+                                    Layout.preferredWidth: 90
+                                    elide: Text.ElideRight
+                                }
+                                ComboBox {
                                     Layout.fillWidth: true
-                                    spacing: 8
-                                    property int rowIdx: index
-                                    property var sources: ["(ignore)","name","time","desc","cmt","ele",
-                                                           "sat","hdop","vdop","pdop","sym","type",
-                                                           "fix","speed","course","magvar",
-                                                           "filename","foldername"]
-                                    Label {
-                                        text: fieldName
-                                        font: Theme.defaultFont
-                                        color: Theme.mainTextColor
-                                        Layout.preferredWidth: 90
-                                        elide: Text.ElideRight
+                                    font: Theme.tipFont
+                                    model: parent.sources
+                                    currentIndex: {
+                                        var idx = parent.sources.indexOf(sourceTag)
+                                        return idx >= 0 ? idx : 0
                                     }
-                                    ComboBox {
-                                        Layout.fillWidth: true
-                                        font: Theme.tipFont
-                                        model: parent.sources
-                                        currentIndex: {
-                                            var idx = parent.sources.indexOf(sourceTag)
-                                            return idx >= 0 ? idx : 0
-                                        }
-                                        onCurrentIndexChanged: {
-                                            fieldMappingModel.setProperty(rowIdx, "sourceTag",
-                                                                          parent.sources[currentIndex])
-                                        }
+                                    onCurrentIndexChanged: {
+                                        fieldMappingModel.setProperty(rowIdx, "sourceTag",
+                                                                      parent.sources[currentIndex])
                                     }
                                 }
                             }
@@ -484,6 +488,9 @@ Item {
                 }   // end Tab 2
 
             }   // end StackLayout
+
+            }   // end importContent ColumnLayout
+            }   // end importScrollView
 
             // ── Status / progress (always visible, below tabs) ────────────────
             ProgressBar {
@@ -510,6 +517,20 @@ Item {
             ColumnLayout {
                 visible: _isExportMode
                 Layout.fillWidth: true
+                spacing: 12
+
+            // ── Scrollable content (everything except Export/status/share) ────
+            ScrollView {
+                id: exportScrollView
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(exportContent.implicitHeight, mainWindow.height * 0.45)
+                clip: true
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                ScrollBar.vertical.policy:   ScrollBar.AsNeeded
+
+            ColumnLayout {
+                id: exportContent
+                width: exportScrollView.width - exportScrollView.ScrollBar.vertical.width - 4
                 spacing: 12
 
                 Label { text: qsTr("Layer to export"); font: Theme.defaultFont; color: Theme.mainTextColor }
@@ -565,26 +586,20 @@ Item {
                         onClicked: { for (var i = 0; i < exportFeaturesModel.count; i++) exportFeaturesModel.setProperty(i, "checked", false) }
                     }
                 }
-                ScrollView {
-                    id: exportChecklistView
+                // No inner ScrollView here — the outer exportScrollView
+                // handles scrolling for the whole export tab.
+                ColumnLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(exportFeaturesModel.count * 44, 180)
                     visible: exportFeaturesModel.count > 0
-                    clip: true
-                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                    ScrollBar.vertical.policy:   ScrollBar.AsNeeded
-                    ColumnLayout {
-                        width: exportChecklistView.availableWidth
-                        spacing: 0
-                        Repeater {
-                            model: exportFeaturesModel
-                            delegate: CheckBox {
-                                Layout.fillWidth: true
-                                text: label
-                                checked: model.checked
-                                font: Theme.tipFont
-                                onCheckedChanged: exportFeaturesModel.setProperty(index, "checked", checked)
-                            }
+                    spacing: 0
+                    Repeater {
+                        model: exportFeaturesModel
+                        delegate: CheckBox {
+                            Layout.fillWidth: true
+                            text: label
+                            checked: model.checked
+                            font: Theme.tipFont
+                            onCheckedChanged: exportFeaturesModel.setProperty(index, "checked", checked)
                         }
                     }
                 }
@@ -653,6 +668,9 @@ Item {
                                              .replace(/^file:\/\//, "")
                     }
                 }
+
+            }   // end exportContent ColumnLayout
+            }   // end exportScrollView
 
                 Button {
                     id: exportButton2
